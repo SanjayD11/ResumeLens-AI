@@ -1,119 +1,66 @@
 📄 ResumeLens-AI
+AI-Powered Resume Analyzer (LLaMA 3)
+ResumeLens-AI is a Python-based web application that analyzes resumes in PDF format and provides AI-driven insights to improve resume quality.
+The application uses LLaMA 3 via Ollama for all language processing and runs entirely locally without external APIs.
 
-AI-Powered Resume Analyzer (Powered by LLaMA 3)
+⚙️ Model Disclosure :
+- Uses LLaMA 3 exclusively
+- Runs locally via Ollama
+- No OpenAI / GPT models
+- No cloud-based APIs
 
-ResumeLens-AI is an intelligent resume analysis application built using Python and Streamlit, designed to help users evaluate and improve their resumes.
-The system extracts content from PDF resumes and uses LLaMA 3 via Ollama to provide structured insights, strengths, and improvement suggestions.
+✨ Features :
+- Upload and analyze resumes in PDF format
+- AI-generated strengths and improvement suggestions
+- Skill and content evaluation
+- Interactive Streamlit-based UI
+- Resume analysis report generation
 
-🔥 Note: This project is powered by LLaMA 3
+🛠️ Technology Stack :
+- Programming Language: Python
+- Frontend: Streamlit
+- Large Language Model: LLaMA 3 (via Ollama)
+- PDF Processing: PyPDF2
+- PDF Generation: ReportLab
+- Environment: Virtual Environment (venv)
 
-🚀 Features
-
-📂 Upload resume in PDF format
-
-🧠 AI-based resume analysis using LLaMA 3
-
-📊 Strengths & weaknesses detection
-
-✍️ Skill and content improvement suggestions
-
-🧾 Clean and interactive Streamlit UI
-
-📄 PDF parsing and processing
-
-🖨️ Resume report generation (PDF)
-
-🛠️ Tech Stack
-Category	Technology
-Language	Python
-UI	Streamlit
-AI Model	LLaMA 3 (via Ollama)
-PDF Processing	PyPDF2
-PDF Generation	ReportLab
-Environment	Virtualenv
-⚙️ Setup & Installation : 
-
-1️⃣ Clone the Repository
-git clone https://github.com/YOUR_USERNAME/ResumeLens-AI.git
-cd ResumeLens-AI/PythonScripts/Project02
-
-2️⃣ Create & Activate Virtual Environment
+🚀 Installation & Setup :
+- Clone the Repository
+- Create and Activate Virtual Environment
 python -m venv venv
-
-
-Windows
-
+- Windows
 .\venv\Scripts\Activate
-
-
-macOS / Linux
-
+- macOS / Linux
 source venv/bin/activate
-
-3️⃣ Install Dependencies
+- Install Dependencies
 pip install -r requirements.txt
 
-4️⃣ Install Ollama & LLaMA 3
-
-Download and install Ollama:
-
-https://ollama.com
 
 
-Pull the LLaMA 3 model:
-
+🧠 LLaMA 3 Setup (Required) :
+- Install Ollama → https://ollama.com
+- Pull the LLaMA 3 model:
 ollama pull llama3
+- Ensure Ollama is running in the background before starting the app
 
-
-Ensure Ollama is running in the background.
-
-5️⃣ Run the Application
+▶️ Run the Application :
 streamlit run main.py
 
-📌 Project Structure
+
+
+📂 Project Structure :
+
 Project02/
-│── main.py
-│── logo.png
-│── .gitignore
-│── venv/   (ignored)
-│── assets/
+├── main.py
+└── venv/   (ignored)
 
-🔐 Model Disclosure : 
 
-✔ Powered exclusively by LLaMA 3
-✔ Runs locally using Ollama
-✔ No external APIs
-✔ No OpenAI / GPT usage
 
-🎯 Use Cases : 
+🎯 Use Cases :
 
-Students improving resumes
+- Resume evaluation for students and job seekers
+- AI-assisted resume improvement
+- Demonstration of LLM-powered NLP applications
 
-Job seekers preparing for interviews
-
-Resume screening & evaluation practice
-
-AI + NLP academic projects
-
-📈 Resume Value :
-
-Demonstrates real AI integration
-
-Uses local LLMs (LLaMA 3) — highly valued
-
-Practical Streamlit deployment
-
-Clean software architecture
-
-🤝 Contributing :
-
-Pull requests are welcome.
-For major changes, please open an issue first.
-
-🙌 Acknowledgements :
-
-Meta AI — LLaMA 3
-
-Ollama
-
-Streamlit Community
+👨‍💻 Author :
+- Developed by Sanjay
