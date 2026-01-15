@@ -1,4 +1,6 @@
-📄 ResumeLens-AI
+📄 ResumeLens-AI :
+
+
 AI-Powered Resume Analyzer (LLaMA 3)
 ResumeLens-AI is a Python-based web application that analyzes resumes in PDF format and provides AI-driven insights to improve resume quality.
 The application uses LLaMA 3 via Ollama for all language processing and runs entirely locally without external APIs.
