@@ -31,7 +31,8 @@ AI Model	LLaMA 3 (via Ollama)
 PDF Processing	PyPDF2
 PDF Generation	ReportLab
 Environment	Virtualenv
-⚙️ Setup & Installation
+⚙️ Setup & Installation : 
+
 1️⃣ Clone the Repository
 git clone https://github.com/YOUR_USERNAME/ResumeLens-AI.git
 cd ResumeLens-AI/PythonScripts/Project02
@@ -77,14 +78,14 @@ Project02/
 │── venv/   (ignored)
 │── assets/
 
-🔐 Model Disclosure
+🔐 Model Disclosure : 
 
 ✔ Powered exclusively by LLaMA 3
 ✔ Runs locally using Ollama
 ✔ No external APIs
 ✔ No OpenAI / GPT usage
 
-🎯 Use Cases
+🎯 Use Cases : 
 
 Students improving resumes
 
@@ -94,7 +95,7 @@ Resume screening & evaluation practice
 
 AI + NLP academic projects
 
-📈 Resume Value
+📈 Resume Value :
 
 Demonstrates real AI integration
 
@@ -104,16 +105,12 @@ Practical Streamlit deployment
 
 Clean software architecture
 
-🤝 Contributing
+🤝 Contributing :
 
 Pull requests are welcome.
 For major changes, please open an issue first.
 
-📜 License
-
-This project is licensed for educational and personal use.
-
-🙌 Acknowledgements
+🙌 Acknowledgements :
 
 Meta AI — LLaMA 3
 
