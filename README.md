@@ -28,13 +28,13 @@ The application uses LLaMA 3 via Ollama for all language processing and runs ent
 
 🚀 Installation & Setup :
 - Clone the Repository
-- Create and Activate Virtual Environment
+- Create and Activate Virtual Environment :
 python -m venv venv
-- Windows
+- Windows : 
 .\venv\Scripts\Activate
-- macOS / Linux
+- macOS / Linux : 
 source venv/bin/activate
-- Install Dependencies
+- Install Dependencies : 
 pip install -r requirements.txt
 
 
@@ -53,7 +53,9 @@ streamlit run main.py
 📂 Project Structure :
 
 Project02/
+
 ├── main.py
+
 └── venv/   (ignored)
 
 
