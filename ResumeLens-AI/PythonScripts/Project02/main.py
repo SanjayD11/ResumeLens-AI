@@ -2,6 +2,7 @@ import streamlit as st
 import PyPDF2
 import io
 import re
+import os
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from groq import Groq
@@ -20,7 +21,10 @@ st.markdown(
 )
 
 uploaded_file = st.file_uploader("Upload your resume (PDF or TXT)", type=["pdf", "txt"])
-job_description = st.text_area("Paste the job description you are targeting (recommended for accurate scoring)", height=150)
+job_description = st.text_area(
+    "Paste the job description you are targeting (recommended for accurate scoring)",
+    height=150
+)
 analyze = st.button("Analyze Resume")
 
 # ---------------- FUNCTIONS ----------------
@@ -113,38 +117,46 @@ def generate_pdf(ats, skill, readability, keywords, feedback):
 
 # ---------------- MAIN LOGIC ----------------
 if analyze and uploaded_file:
-    try:
-        resume_text = extract_text_from_file(uploaded_file)
-        if not resume_text.strip():
-            st.error("No readable content found.")
-            st.stop()
+    resume_text = extract_text_from_file(uploaded_file)
 
-        ats = calculate_ats_score(resume_text)
-        skill, keywords = calculate_skill_match(resume_text, job_description)
-        readability = calculate_readability(resume_text)
+    if not resume_text.strip():
+        st.error("No readable content found.")
+        st.stop()
 
-        st.markdown("## 📌 Resume Evaluation Metrics")
-        st.progress(ats/100); st.write(f"**ATS Score:** {ats}/100")
-        st.progress((skill or 0)/100); st.write(f"**Skill Match:** {skill if skill else 'N/A'}%")
-        st.progress(readability/100); st.write(f"**Readability:** {readability}/100")
-        if keywords:
-            st.write("**Matched Keywords:**", ", ".join(keywords))
-        st.divider()
+    # Rate limit
+    if "api_calls" not in st.session_state:
+        st.session_state.api_calls = 0
 
-        # ---------------- GROQ AI ----------------
-        import os
+    if st.session_state.api_calls >= 3:
+        st.warning("Daily limit reached. Please try again later.")
+        st.stop()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    st.session_state.api_calls += 1
 
-if not GROQ_API_KEY:
-    st.error("Server configuration error. Please try again later.")
-    st.stop()
+    ats = calculate_ats_score(resume_text)
+    skill, keywords = calculate_skill_match(resume_text, job_description)
+    readability = calculate_readability(resume_text)
 
-client = Groq(api_key=GROQ_API_KEY)
+    st.markdown("## 📌 Resume Evaluation Metrics")
+    st.progress(ats/100); st.write(f"**ATS Score:** {ats}/100")
+    st.progress((skill or 0)/100); st.write(f"**Skill Match:** {skill if skill else 'N/A'}%")
+    st.progress(readability/100); st.write(f"**Readability:** {readability}/100")
 
-        MODEL_NAME = "llama-3.3-70b-versatile"  # <-- this WORKS 100% with your key
+    if keywords:
+        st.write("**Matched Keywords:**", ", ".join(keywords))
 
-        prompt = f"""
+    st.divider()
+
+    # ---------------- GROQ AI ----------------
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+    if not GROQ_API_KEY:
+        st.error("Server configuration error. Please try again later.")
+        st.stop()
+
+    client = Groq(api_key=GROQ_API_KEY)
+
+    prompt = f"""
 You are a professional resume reviewer.
 Analyze the following resume thoroughly and provide structured feedback:
 
@@ -155,26 +167,24 @@ Job Description:
 {job_description if job_description else 'Not provided'}
 """
 
-        try:
-            completion = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_tokens=2000
-            )
-            ai_feedback = completion.choices[0].message.content.strip()
-            st.markdown("### 📊 AI Feedback")
-            st.markdown(ai_feedback)
-        except Exception as e:
-            st.error(f"AI feedback could not be generated: {str(e)}")
-            ai_feedback = "AI feedback not available."
+    completion = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=2000
+    )
 
-        # PDF download
-        pdf = generate_pdf(ats, skill, readability, keywords, ai_feedback)
-        st.download_button("📥 Download PDF Report", pdf, "resume_report.pdf", "application/pdf")
+    ai_feedback = completion.choices[0].message.content.strip()
+    st.markdown("### 📊 AI Feedback")
+    st.markdown(ai_feedback)
 
-    except Exception as e:
-        st.error(str(e))
+    pdf = generate_pdf(ats, skill, readability, keywords, ai_feedback)
+    st.download_button(
+        "📥 Download PDF Report",
+        pdf,
+        "resume_report.pdf",
+        "application/pdf"
+    )
 
 # ---------------- FOOTER ----------------
 st.markdown(
