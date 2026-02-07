@@ -132,8 +132,16 @@ if analyze and uploaded_file:
         st.divider()
 
         # ---------------- GROQ AI ----------------
-        GROQ_API_KEY = "YOUR_API_KEY_HERE"
-        client = Groq(api_key=GROQ_API_KEY)
+        import os
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+if not GROQ_API_KEY:
+    st.error("Server configuration error. Please try again later.")
+    st.stop()
+
+client = Groq(api_key=GROQ_API_KEY)
+
         MODEL_NAME = "llama-3.3-70b-versatile"  # <-- this WORKS 100% with your key
 
         prompt = f"""
