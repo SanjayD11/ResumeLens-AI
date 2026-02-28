@@ -30,13 +30,17 @@ job_description = st.text_area(
     height=150
 )
 
-col1, col2, col3 = st.columns(3)
+# ---------------- FIXED BUTTON ALIGNMENT ----------------
+col1, col2, col3 = st.columns([1, 1, 1])
+
 with col1:
-    analyze = st.button("📊 Analyze Resume")
+    analyze = st.button("📊 Analyze Resume", use_container_width=True)
+
 with col2:
-    rewrite = st.button("✨ Generate Optimized Resume")
+    rewrite = st.button("✨ Generate Optimized Resume", use_container_width=True)
+
 with col3:
-    generate_questions = st.button("🎤 Generate Interview Questions")
+    generate_questions = st.button("🎤 Generate Interview Questions", use_container_width=True)
 
 # ---------------- FUNCTIONS ----------------
 
@@ -113,8 +117,9 @@ def get_grade(score):
     else:
         return "C"
 
+# ---------------- FIXED RADAR CHART ----------------
 def plot_radar(ats, skill, readability):
-    categories = ['ATS', 'Skill Match', 'Readability']
+    categories = ['ATS Score', 'Skill Match', 'Readability']
     values = [ats, skill if skill else 0, readability]
     values += values[:1]
 
@@ -122,13 +127,31 @@ def plot_radar(ats, skill, readability):
     angles += angles[:1]
 
     fig, ax = plt.subplots(figsize=(4,4), subplot_kw=dict(polar=True))
-    fig.patch.set_alpha(0)  # Transparent background
-    ax.plot(angles, values)
+
+    # Match Streamlit dark theme
+    fig.patch.set_facecolor('#0E1117')
+    ax.set_facecolor('#0E1117')
+
+    ax.plot(angles, values, linewidth=2)
     ax.fill(angles, values, alpha=0.25)
+
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(categories)
+    ax.set_xticklabels(
+        categories,
+        fontsize=11,
+        fontweight="bold",
+        color="white"
+    )
+
+    ax.set_ylim(0, 100)
     ax.set_yticklabels([])
-    ax.set_title("Resume Score Breakdown", size=11)
+
+    ax.set_title(
+        "Resume Score Breakdown",
+        size=12,
+        weight="bold",
+        color="white"
+    )
 
     st.pyplot(fig)
 
