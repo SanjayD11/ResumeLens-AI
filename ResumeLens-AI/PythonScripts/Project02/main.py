@@ -3,6 +3,8 @@ import PyPDF2
 import io
 import re
 import os
+import math
+import matplotlib.pyplot as plt
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from groq import Groq
@@ -16,7 +18,7 @@ st.set_page_config(
 
 st.title("ResumeLens AI")
 st.markdown(
-    "<p style='font-size:18px; color:#6c757d;'>Smarter, AI-powered resume analysis for better hiring outcomes.</p>",
+    "<p style='font-size:18px; color:#6c757d;'>Smarter, AI-powered resume analysis & optimization platform.</p>",
     unsafe_allow_html=True
 )
 
@@ -25,9 +27,15 @@ job_description = st.text_area(
     "Paste the job description you are targeting (recommended for accurate scoring)",
     height=150
 )
-analyze = st.button("Analyze Resume")
+
+col1, col2 = st.columns(2)
+with col1:
+    analyze = st.button("📊 Analyze Resume")
+with col2:
+    rewrite = st.button("✨ Generate Optimized Resume")
 
 # ---------------- FUNCTIONS ----------------
+
 def extract_text_from_pdf(file):
     reader = PyPDF2.PdfReader(file)
     text = ""
@@ -69,11 +77,19 @@ def calculate_ats_score(text):
 
 def calculate_skill_match(text, jd):
     if not jd:
-        return None, []
+        return None, [], []
+
     resume_words = set(re.findall(r"\b[a-zA-Z]{3,}\b", text.lower()))
     jd_words = set(re.findall(r"\b[a-zA-Z]{3,}\b", jd.lower()))
+
     matched = resume_words & jd_words
-    return round(len(matched) / len(jd_words) * 100, 1), sorted(matched)[:10]
+    missing = jd_words - resume_words
+
+    return (
+        round(len(matched) / len(jd_words) * 100, 1),
+        sorted(matched)[:10],
+        sorted(missing)[:10]
+    )
 
 def calculate_readability(text):
     sentences = [s for s in re.split(r"[.!?]", text) if s.strip()]
@@ -82,6 +98,34 @@ def calculate_readability(text):
         return 0
     score = 100 - ((len(words)/len(sentences))*1.5) - ((len([w for w in words if len(w)>12])/len(words))*100)
     return max(min(round(score),100),30)
+
+def get_grade(score):
+    if score >= 85:
+        return "A+"
+    elif score >= 70:
+        return "A"
+    elif score >= 55:
+        return "B"
+    else:
+        return "C"
+
+def plot_radar(ats, skill, readability):
+    categories = ['ATS', 'Skill Match', 'Readability']
+    values = [ats, skill if skill else 0, readability]
+    values += values[:1]
+
+    angles = [n / float(len(categories)) * 2 * math.pi for n in range(len(categories))]
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(figsize=(4,4), subplot_kw=dict(polar=True))
+    ax.plot(angles, values)
+    ax.fill(angles, values, alpha=0.25)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(categories)
+    ax.set_yticklabels([])
+    ax.set_title("Resume Score Breakdown", size=11)
+
+    st.pyplot(fig)
 
 def generate_pdf(ats, skill, readability, keywords, feedback):
     buffer = io.BytesIO()
@@ -94,7 +138,7 @@ def generate_pdf(ats, skill, readability, keywords, feedback):
     c.setFont("Helvetica", 12)
     y = h-90
     c.drawString(50, y, f"ATS Score: {ats}/100"); y -= 20
-    c.drawString(50, y, f"Skill Match: {skill if skill is not None else 'N/A'}%"); y -= 20
+    c.drawString(50, y, f"Skill Match: {skill if skill else 'N/A'}%"); y -= 20
     c.drawString(50, y, f"Readability: {readability}/100"); y -= 30
 
     if keywords:
@@ -116,75 +160,102 @@ def generate_pdf(ats, skill, readability, keywords, feedback):
     return buffer
 
 # ---------------- MAIN LOGIC ----------------
-if analyze and uploaded_file:
+
+if (analyze or rewrite) and uploaded_file:
+
     resume_text = extract_text_from_file(uploaded_file)
 
     if not resume_text.strip():
         st.error("No readable content found.")
         st.stop()
 
-    # Rate limit
-    if "api_calls" not in st.session_state:
-        st.session_state.api_calls = 0
-
-    if st.session_state.api_calls >= 3:
-        st.warning("Daily limit reached. Please try again later.")
-        st.stop()
-
-    st.session_state.api_calls += 1
-
     ats = calculate_ats_score(resume_text)
-    skill, keywords = calculate_skill_match(resume_text, job_description)
+    skill, keywords, missing_keywords = calculate_skill_match(resume_text, job_description)
     readability = calculate_readability(resume_text)
 
-    st.markdown("## 📌 Resume Evaluation Metrics")
-    st.progress(ats/100); st.write(f"**ATS Score:** {ats}/100")
-    st.progress((skill or 0)/100); st.write(f"**Skill Match:** {skill if skill else 'N/A'}%")
-    st.progress(readability/100); st.write(f"**Readability:** {readability}/100")
-
-    if keywords:
-        st.write("**Matched Keywords:**", ", ".join(keywords))
-
-    st.divider()
-
-    # ---------------- GROQ AI ----------------
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
     if not GROQ_API_KEY:
-        st.error("Server configuration error. Please try again later.")
+        st.error("Server configuration error.")
         st.stop()
 
     client = Groq(api_key=GROQ_API_KEY)
 
-    prompt = f"""
-You are a professional resume reviewer.
-Analyze the following resume thoroughly and provide structured feedback:
+# ---------------- ANALYZE MODE ----------------
 
-Resume Content:
+    if analyze:
+        st.markdown("## 📌 Resume Evaluation Metrics")
+        st.progress(ats/100); st.write(f"**ATS Score:** {ats}/100")
+        st.progress((skill or 0)/100); st.write(f"**Skill Match:** {skill if skill else 'N/A'}%")
+        st.progress(readability/100); st.write(f"**Readability:** {readability}/100")
+
+        st.success(f"🏆 Overall Resume Grade: {get_grade(ats)}")
+
+        plot_radar(ats, skill, readability)
+
+        if keywords:
+            st.write("✅ Matched Keywords:", ", ".join(keywords))
+        if missing_keywords:
+            st.write("❌ Missing Keywords:", ", ".join(missing_keywords))
+
+        st.divider()
+
+        prompt = f"""
+You are a professional resume reviewer.
+
+Analyze the following resume thoroughly and provide structured feedback.
+
+Resume:
 {resume_text}
 
 Job Description:
 {job_description if job_description else 'Not provided'}
 """
 
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-        max_tokens=2000
-    )
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=2000
+        )
 
-    ai_feedback = completion.choices[0].message.content.strip()
-    st.markdown("### 📊 AI Feedback")
-    st.markdown(ai_feedback)
+        ai_feedback = completion.choices[0].message.content.strip()
+        st.markdown("### 📊 AI Feedback")
+        st.markdown(ai_feedback)
 
-    pdf = generate_pdf(ats, skill, readability, keywords, ai_feedback)
-    st.download_button(
-        "📥 Download PDF Report",
-        pdf,
-        "resume_report.pdf",
-        "application/pdf"
-    )
+        pdf = generate_pdf(ats, skill, readability, keywords, ai_feedback)
+        st.download_button("📥 Download PDF Report", pdf, "resume_report.pdf", "application/pdf")
+
+# ---------------- REWRITE MODE ----------------
+
+    if rewrite:
+
+        st.markdown("## ✨ Optimized Resume Version")
+
+        rewrite_prompt = f"""
+You are an expert ATS resume optimizer.
+
+Rewrite the resume to better match the job description.
+- Improve bullet points using strong action verbs
+- Add measurable achievements
+- Optimize keywords
+- Keep it concise and professional
+
+Resume:
+{resume_text}
+
+Job Description:
+{job_description}
+"""
+
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": rewrite_prompt}],
+            temperature=0.4,
+            max_tokens=2000
+        )
+
+        optimized_resume = completion.choices[0].message.content.strip()
+        st.markdown(optimized_resume)
 
 # ---------------- FOOTER ----------------
 st.markdown(
