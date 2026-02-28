@@ -4,6 +4,8 @@ import io
 import re
 import os
 import math
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -28,11 +30,13 @@ job_description = st.text_area(
     height=150
 )
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
     analyze = st.button("📊 Analyze Resume")
 with col2:
     rewrite = st.button("✨ Generate Optimized Resume")
+with col3:
+    generate_questions = st.button("🎤 Generate Interview Questions")
 
 # ---------------- FUNCTIONS ----------------
 
@@ -118,6 +122,7 @@ def plot_radar(ats, skill, readability):
     angles += angles[:1]
 
     fig, ax = plt.subplots(figsize=(4,4), subplot_kw=dict(polar=True))
+    fig.patch.set_alpha(0)  # Transparent background
     ax.plot(angles, values)
     ax.fill(angles, values, alpha=0.25)
     ax.set_xticks(angles[:-1])
@@ -127,41 +132,9 @@ def plot_radar(ats, skill, readability):
 
     st.pyplot(fig)
 
-def generate_pdf(ats, skill, readability, keywords, feedback):
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
-    w, h = letter
-
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, h-50, "ResumeLens AI – Resume Analysis Report")
-
-    c.setFont("Helvetica", 12)
-    y = h-90
-    c.drawString(50, y, f"ATS Score: {ats}/100"); y -= 20
-    c.drawString(50, y, f"Skill Match: {skill if skill else 'N/A'}%"); y -= 20
-    c.drawString(50, y, f"Readability: {readability}/100"); y -= 30
-
-    if keywords:
-        c.drawString(50, y, "Matched Keywords: " + ", ".join(keywords)); y -= 30
-
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, y, "AI Feedback:"); y -= 20
-    c.setFont("Helvetica", 11)
-
-    for line in feedback.split("\n"):
-        if y < 50:
-            c.showPage()
-            y = h - 50
-        c.drawString(50, y, line[:90])
-        y -= 14
-
-    c.save()
-    buffer.seek(0)
-    return buffer
-
 # ---------------- MAIN LOGIC ----------------
 
-if (analyze or rewrite) and uploaded_file:
+if (analyze or rewrite or generate_questions) and uploaded_file:
 
     resume_text = extract_text_from_file(uploaded_file)
 
@@ -193,9 +166,12 @@ if (analyze or rewrite) and uploaded_file:
         plot_radar(ats, skill, readability)
 
         if keywords:
-            st.write("✅ Matched Keywords:", ", ".join(keywords))
+            st.success("Matched Keywords")
+            st.write(", ".join(keywords))
+
         if missing_keywords:
-            st.write("❌ Missing Keywords:", ", ".join(missing_keywords))
+            st.error("Missing Important Keywords")
+            st.write(", ".join(missing_keywords))
 
         st.divider()
 
@@ -211,24 +187,21 @@ Job Description:
 {job_description if job_description else 'Not provided'}
 """
 
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=2000
-        )
+        with st.spinner("🤖 AI is analyzing your resume..."):
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=2000
+            )
 
         ai_feedback = completion.choices[0].message.content.strip()
         st.markdown("### 📊 AI Feedback")
         st.markdown(ai_feedback)
 
-        pdf = generate_pdf(ats, skill, readability, keywords, ai_feedback)
-        st.download_button("📥 Download PDF Report", pdf, "resume_report.pdf", "application/pdf")
-
 # ---------------- REWRITE MODE ----------------
 
     if rewrite:
-
         st.markdown("## ✨ Optimized Resume Version")
 
         rewrite_prompt = f"""
@@ -247,15 +220,43 @@ Job Description:
 {job_description}
 """
 
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": rewrite_prompt}],
-            temperature=0.4,
-            max_tokens=2000
-        )
+        with st.spinner("✍️ Optimizing your resume..."):
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": rewrite_prompt}],
+                temperature=0.4,
+                max_tokens=2000
+            )
 
         optimized_resume = completion.choices[0].message.content.strip()
         st.markdown(optimized_resume)
+
+# ---------------- INTERVIEW QUESTIONS MODE ----------------
+
+    if generate_questions:
+        st.markdown("## 🎤 Interview Questions Based on Your Resume")
+
+        interview_prompt = f"""
+Generate 10 technical and 5 HR interview questions 
+based on this resume and job description.
+
+Resume:
+{resume_text}
+
+Job Description:
+{job_description if job_description else 'Not provided'}
+"""
+
+        with st.spinner("🎤 Generating interview questions..."):
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": interview_prompt}],
+                temperature=0.5,
+                max_tokens=2000
+            )
+
+        questions = completion.choices[0].message.content.strip()
+        st.markdown(questions)
 
 # ---------------- FOOTER ----------------
 st.markdown(
