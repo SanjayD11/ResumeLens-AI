@@ -2,3 +2,4 @@ streamlit
 PyPDF2
 reportlab
 groq
+matplotlib
