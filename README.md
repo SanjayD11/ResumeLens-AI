@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="ResumeLens AI Banner" width="100%" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:4F8EF7,100:8B5CF6&height=220&section=header&text=ResumeLens%20AI&fontSize=50&fontColor=ffffff&fontAlignY=35&desc=AI-Powered%20Resume%20Analyzer%20%26%20Optimizer&descSize=18&descAlignY=55&descColor=ffffffcc&animation=fadeIn" alt="ResumeLens AI Banner" width="100%" />
 </p>
 
 <h1 align="center">📄 ResumeLens AI</h1>
@@ -29,7 +29,7 @@
 
 Upload a resume. Paste a job description. Get instant AI-driven insights — from ATS compatibility scores to a fully rewritten, optimized resume — all within seconds.
 
-> 💡 Built as a real-world SaaS demonstration of LLM-powered document intelligence.
+> 💡 Built as a real-world web application demonstrating LLM-powered document intelligence.
 
 <br/>
 
@@ -160,7 +160,7 @@ resumelens-ai/
 | **Job Seekers** | Optimize resumes before applying to beat ATS filters |
 | **Students** | Get professional-grade feedback on first resumes |
 | **Career Coaches** | Quickly audit client resumes with data-backed insights |
-| **Developers** | Reference architecture for LLM-powered SaaS applications |
+| **Developers** | Reference architecture for LLM-powered web applications |
 | **Recruiters** | Understand what makes a resume score high or low |
 
 <br/>
