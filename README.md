@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:4F8EF7,100:8B5CF6&height=220&section=header&text=ResumeLens%20AI&fontSize=50&fontColor=ffffff&fontAlignY=35&desc=AI-Powered%20Resume%20Analyzer%20%26%20Optimizer&descSize=18&descAlignY=55&descColor=ffffffcc&animation=fadeIn" alt="ResumeLens AI Banner" width="100%" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:4F8EF7,100:8B5CF6&height=220&section=header&text=ResumeLens%20AI&fontSize=50&fontColor=ffffff&fontAlignY=35&desc=AI-Powered%20Resume%20Analyzer%20and%20Optimizer&descSize=18&descAlignY=55&descColor=ffffffcc&animation=fadeIn" alt="ResumeLens AI Banner" width="100%" />
 </p>
 
 <h1 align="center">📄 ResumeLens AI</h1>
