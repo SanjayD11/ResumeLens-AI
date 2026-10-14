@@ -18,11 +18,24 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("ResumeLens AI")
+
+# ---------------- BRANDING HEADER ----------------
+from pathlib import Path
+
+logo_path = Path(__file__).parent / "assets" / "resumelens-logo.png"
+
+if logo_path.exists():
+    st.image(str(logo_path), width=420)
+else:
+    st.title("ResumeLens AI")
+
 st.markdown(
-    "<p style='font-size:18px; color:#6c757d;'>Smarter, AI-powered resume analysis & optimization platform.</p>",
+    "<p style='font-size:18px; color:#6c757d;'>"
+    "Smarter, AI-powered resume analysis & optimization platform."
+    "</p>",
     unsafe_allow_html=True
 )
+
 
 uploaded_file = st.file_uploader("Upload your resume (PDF or TXT)", type=["pdf", "txt"])
 job_description = st.text_area(
