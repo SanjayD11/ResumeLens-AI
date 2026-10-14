@@ -392,10 +392,90 @@ def generate_ai_response(client, prompt, temperature=0.3):
     return clean_model_output(response.choices[0].message.content)
 
 
+# ---------------- PDF TEXT NORMALIZATION ----------------
+
+def normalize_pdf_text(value):
+    """
+    ReportLab's built-in Helvetica fonts do not support every Unicode glyph.
+    Replace common problematic characters with safe equivalents to prevent
+    black square glyphs in exported PDFs.
+    """
+    replacements = {
+        "\u2022": "-",       # bullet
+        "\u25aa": "-",       # small square bullet
+        "\u25cf": "-",       # black circle
+        "\u2011": "-",       # non-breaking hyphen
+        "\u2010": "-",       # hyphen
+        "\u2012": "-",       # figure dash
+        "\u2013": "-",       # en dash
+        "\u2014": "-",       # em dash
+        "\u2212": "-",       # minus
+        "\u2018": "'",       # left single quote
+        "\u2019": "'",       # right single quote
+        "\u201c": '"',       # left double quote
+        "\u201d": '"',       # right double quote
+        "\u2026": "...",     # ellipsis
+        "\u00a0": " ",       # non-breaking space
+        "\u200b": "",        # zero-width space
+        "\u200c": "",
+        "\u200d": "",
+        "\ufeff": "",
+        "\u2192": "->",
+        "\u2190": "<-",
+        "\u2264": "<=",
+        "\u2265": ">=",
+        "\u2248": "~",
+        "\u00d7": "x",
+        "\u2713": "[OK]",
+        "\u2714": "[OK]",
+        "\u2717": "[X]",
+        "\u2764": "<3",
+        "\u26a1": "",
+        "\U0001f4ca": "",
+        "\U0001f4c4": "",
+        "\U0001f3a4": "",
+    }
+    for old, new in replacements.items():
+        value = value.replace(old, new)
+
+    # Keep only characters supported by the built-in PDF fonts.
+    value = value.encode("latin-1", errors="replace").decode("latin-1")
+    value = re.sub(r"[ \t]+", " ", value)
+    return value
+
+
 # ---------------- PDF EXPORT ----------------
 
 def markdown_to_pdf_bytes(markdown_text, title="ResumeLens AI Report"):
     """Render generated Markdown into a readable, paginated PDF."""
+    markdown_text = normalize_pdf_text(markdown_text)
+
+    # Convert Markdown tables into readable text rows rather than rendering
+    # very wide, malformed tables that can contain continuation bullets.
+    # This is especially useful for model output where bullets accidentally
+    # spill into extra table rows.
+    raw_lines = markdown_text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    converted_lines = []
+    in_table = False
+    for raw in raw_lines:
+        stripped = raw.strip()
+        if stripped.startswith("|") and "|" in stripped[1:]:
+            cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+            if all(re.fullmatch(r":?-{3,}:?", cell.replace(" ", "")) for cell in cells):
+                continue
+            if not in_table:
+                converted_lines.append("")
+                in_table = True
+            if cells and cells[0] in ("#", "No.", "Number"):
+                continue
+            converted_lines.append(" - " + " | ".join(cell for cell in cells if cell))
+        else:
+            if in_table:
+                converted_lines.append("")
+                in_table = False
+            converted_lines.append(raw)
+    markdown_text = "\n".join(converted_lines)
+
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -447,7 +527,8 @@ def markdown_to_pdf_bytes(markdown_text, title="ResumeLens AI Report"):
     }
 
     def escape_reportlab(text):
-        # Escape XML characters for ReportLab Paragraph's limited markup parser.
+        # Normalize unsupported Unicode before escaping XML for ReportLab.
+        text = normalize_pdf_text(text)
         text = html.unescape(text)
         text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         # Support basic Markdown emphasis and inline code after escaping.
@@ -727,9 +808,12 @@ Generate 15 interview questions based on the resume and target role:
 - 10 technical or role-specific questions
 - 5 HR and behavioral questions
 
-Use clean Markdown only. Do not return HTML or encoded HTML.
-For each question, include a concise note on what the interviewer evaluates.
-Include suggested answer points where useful.
+Use clean Markdown only. Do not return HTML, encoded HTML, or Markdown tables.
+Format every question as a numbered heading or numbered list item.
+Under each question, use separate short bullet points for:
+- What the interviewer evaluates
+- Suggested answer points
+Keep each question and its answer points together as a normal list, never as a table.
 Base questions on the candidate's actual resume; do not assume unlisted experience.
 
 RESUME:
@@ -758,8 +842,8 @@ JOB DESCRIPTION:
 st.markdown(
     """
     <div class="rl-footer">
-        Powered by Groq AI · GPT-OSS 120B<br>
-        Made with ♥ by
+        Powered by Groq AI | GPT-OSS 120B<br>
+        Made with love by
         <a href="https://github.com/SanjayD11" target="_blank"
            rel="noopener noreferrer">Sanjay Dharmarajou</a>
     </div>
